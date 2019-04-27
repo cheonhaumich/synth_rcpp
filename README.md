@@ -57,3 +57,95 @@ ATTplot (ATT from synthetic, placeboATT from placebo){
 01.	Calculate standard deviation of placeboATT across the number of control units
 02.	Load R::ggplot2 and draw ATT plot across time with grey shadow of +/- 1SD
 }
+
+
+
+
+Example code
+
+library(Rcpp)
+library(RcppArmadillo)
+library(devtools)
+library(magrittr)
+library(dplyr)
+library(Synth)
+library(optimx)
+library(ggplot2)
+library(syntheticRcpp)
+help(syntheticRcpp)
+
+## how R::synth operates
+data(basque)
+# dataprep: prepare data for synth
+dataprep.out <-
+  dataprep(
+    foo = basque
+    ,predictors= c("school.illit",
+                   "school.prim",
+                   "school.med",
+                   "school.high",
+                   "school.post.high"
+                   ,"invest"
+    )
+    ,predictors.op = c("mean")
+    ,dependent     = c("gdpcap")
+    ,unit.variable = c("regionno")
+    ,time.variable = c("year")
+    ,special.predictors = list(
+      list("gdpcap",1960:1969,c("mean")),                            
+      list("sec.agriculture",seq(1961,1969,2),c("mean")),
+      list("sec.energy",seq(1961,1969,2),c("mean")),
+      list("sec.industry",seq(1961,1969,2),c("mean")),
+      list("sec.construction",seq(1961,1969,2),c("mean")),
+      list("sec.services.venta",seq(1961,1969,2),c("mean")),
+      list("sec.services.nonventa",seq(1961,1969,2),c("mean")),
+      list("popdens",1969,c("mean")))
+    ,treatment.identifier  = 17
+    ,controls.identifier   = c(2:16,18)
+    ,time.predictors.prior = c(1964:1969)
+    ,time.optimize.ssr     = c(1960:1969)
+    ,unit.names.variable   = c("regionname")
+    ,time.plot            = c(1955:1997))
+
+
+R_synth <- synth(data.prep.obj = dataprep.out)
+gaps   <- dataprep.out$Y1plot-(dataprep.out$Y0plot%*%R_synth$solution.w)
+
+
+## make a balanced panel for syntheticRcpp
+
+basque %>%
+  mutate(
+    treatment=case_when(year < 1975 ~ 0,
+                        regionno != 17 ~ 0,
+                        regionno == 17 ~ 1) # Basque after 1975 is treated
+  ) %>%
+  filter(regionno != 1) -> basque_panel
+
+basque_panel <- basque_panel[,-2]
+basque_panel_mat <- as.matrix(basque_panel)
+
+
+m <- basque_panel_mat
+u <- 1
+t <- 2
+y <- 3
+d <- 17
+c <- c(4:16)
+
+library(ggplot2)
+library(optimx)
+
+data1    <- data(m,u,t,y,d,c)
+synthcpp <- synthetic( data1$y0, data1$y1, data1$x0_scaled, data1$x1_scaled, data1$z0, data1$z1 )
+gaps_cpp <- synthcpp$ATT
+
+# plot comparison (red is Rcpp while black is R)
+plot(gaps, type = "l", col = "black", main = "ATT with R:synth and Rcpp:synth", ylab = "ATT", xlab = "time")
+lines(gaps_cpp, type = "l", col = "red")
+
+# inference
+placebos <- inference( data1$y0, data1$y1, data1$x0_scaled, data1$x1_scaled, data1$z0, data1$z1)
+
+# graph
+ATTplot(synthcpp$ATT, m, d, t, placebos)
