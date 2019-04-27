@@ -1,0 +1,12 @@
+Package: syntheticRcpp
+Type: Package
+Title: Synthetic control in Rcpp implementation using ADMM 
+Version: 1.0
+Date: 2019-04-27
+Author: Hayoung Cheon
+Maintainer: Hayoung Cheon <cheonha@umich.edu>
+Description: syntheticRcpp
+License: GPL-3
+Imports: Rcpp (>= 1.0.0)
+LinkingTo: Rcpp, RcppArmadillo
+RoxygenNote: 6.1.1.9000
