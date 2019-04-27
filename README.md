@@ -63,49 +63,49 @@ ATTplot (ATT from synthetic, placeboATT from placebo){
 
 Example code
 
-library(Rcpp)
-library(RcppArmadillo)
-library(devtools)
-library(magrittr)
-library(dplyr)
-library(Synth)
-library(optimx)
-library(ggplot2)
-library(syntheticRcpp)
-help(syntheticRcpp)
+library(Rcpp)<br />
+library(RcppArmadillo)<br />
+library(devtools)<br />
+library(magrittr)<br />
+library(dplyr)<br />
+library(Synth)<br />
+library(optimx)<br />
+library(ggplot2)<br />
+library(syntheticRcpp)<br />
+help(syntheticRcpp)<br />
 
 ## how R::synth operates
-data(basque)
+data(basque)<br />
 # dataprep: prepare data for synth
-dataprep.out <-
-  dataprep(
-    foo = basque
-    ,predictors= c("school.illit",
-                   "school.prim",
-                   "school.med",
-                   "school.high",
-                   "school.post.high"
-                   ,"invest"
-    )
-    ,predictors.op = c("mean")
-    ,dependent     = c("gdpcap")
-    ,unit.variable = c("regionno")
-    ,time.variable = c("year")
-    ,special.predictors = list(
-      list("gdpcap",1960:1969,c("mean")),                            
-      list("sec.agriculture",seq(1961,1969,2),c("mean")),
-      list("sec.energy",seq(1961,1969,2),c("mean")),
-      list("sec.industry",seq(1961,1969,2),c("mean")),
-      list("sec.construction",seq(1961,1969,2),c("mean")),
-      list("sec.services.venta",seq(1961,1969,2),c("mean")),
-      list("sec.services.nonventa",seq(1961,1969,2),c("mean")),
-      list("popdens",1969,c("mean")))
-    ,treatment.identifier  = 17
-    ,controls.identifier   = c(2:16,18)
-    ,time.predictors.prior = c(1964:1969)
-    ,time.optimize.ssr     = c(1960:1969)
-    ,unit.names.variable   = c("regionname")
-    ,time.plot            = c(1955:1997))
+dataprep.out <-<br />
+  dataprep(<br />
+    foo = basque<br />
+    ,predictors= c("school.illit",<br />
+                   "school.prim",<br />
+                   "school.med",<br />
+                   "school.high",<br />
+                   "school.post.high"<br />
+                   ,"invest"<br />
+    )<br />
+    ,predictors.op = c("mean")<br />
+    ,dependent     = c("gdpcap")<br />
+    ,unit.variable = c("regionno")<br />
+    ,time.variable = c("year")<br />
+    ,special.predictors = list(<br />
+      list("gdpcap",1960:1969,c("mean")),                     <br />       
+      list("sec.agriculture",seq(1961,1969,2),c("mean")),<br />
+      list("sec.energy",seq(1961,1969,2),c("mean")),<br />
+      list("sec.industry",seq(1961,1969,2),c("mean")),<br />
+      list("sec.construction",seq(1961,1969,2),c("mean")),<br />
+      list("sec.services.venta",seq(1961,1969,2),c("mean")),<br />
+      list("sec.services.nonventa",seq(1961,1969,2),c("mean")),<br />
+      list("popdens",1969,c("mean")))<br />
+    ,treatment.identifier  = 17<br />
+    ,controls.identifier   = c(2:16,18)<br />
+    ,time.predictors.prior = c(1964:1969)<br />
+    ,time.optimize.ssr     = c(1960:1969)<br />
+    ,unit.names.variable   = c("regionname")<br />
+    ,time.plot            = c(1955:1997))<br />
 
 
 R_synth <- synth(data.prep.obj = dataprep.out)
@@ -114,38 +114,38 @@ gaps   <- dataprep.out$Y1plot-(dataprep.out$Y0plot%*%R_synth$solution.w)
 
 ## make a balanced panel for syntheticRcpp
 
-basque %>%
-  mutate(
-    treatment=case_when(year < 1975 ~ 0,
-                        regionno != 17 ~ 0,
-                        regionno == 17 ~ 1) # Basque after 1975 is treated
-  ) %>%
-  filter(regionno != 1) -> basque_panel
+basque %>%<br />
+  mutate(<br />
+    treatment=case_when(year < 1975 ~ 0,<br />
+                        regionno != 17 ~ 0,<br />
+                        regionno == 17 ~ 1)<br /> 
+  ) %>%<br />
+  filter(regionno != 1) -> basque_panel<br />
 
-basque_panel <- basque_panel[,-2]
-basque_panel_mat <- as.matrix(basque_panel)
+basque_panel <- basque_panel[,-2]<br />
+basque_panel_mat <- as.matrix(basque_panel)<br />
 
 
-m <- basque_panel_mat
-u <- 1
-t <- 2
-y <- 3
-d <- 17
-c <- c(4:16)
+m <- basque_panel_mat <br />
+u <- 1<br />
+t <- 2<br />
+y <- 3<br />
+d <- 17<br />
+c <- c(4:16)<br />
 
-library(ggplot2)
-library(optimx)
+library(ggplot2)<br />
+library(optimx)<br />
 
-data1    <- data(m,u,t,y,d,c)
-synthcpp <- synthetic( data1$y0, data1$y1, data1$x0_scaled, data1$x1_scaled, data1$z0, data1$z1 )
-gaps_cpp <- synthcpp$ATT
+data1    <- data(m,u,t,y,d,c)<br />
+synthcpp <- synthetic( data1$y0, data1$y1, data1$x0_scaled, data1$x1_scaled, data1$z0, data1$z1 )<br />
+gaps_cpp <- synthcpp$ATT<br />
 
 # plot comparison (red is Rcpp while black is R)
-plot(gaps, type = "l", col = "black", main = "ATT with R:synth and Rcpp:synth", ylab = "ATT", xlab = "time")
-lines(gaps_cpp, type = "l", col = "red")
+plot(gaps, type = "l", col = "black", main = "ATT with R:synth and Rcpp:synth", ylab = "ATT", xlab = "time")<br />
+lines(gaps_cpp, type = "l", col = "red")<br />
 
 # inference
-placebos <- inference( data1$y0, data1$y1, data1$x0_scaled, data1$x1_scaled, data1$z0, data1$z1)
+placebos <- inference( data1$y0, data1$y1, data1$x0_scaled, data1$x1_scaled, data1$z0, data1$z1)<br />
 
 # graph
-ATTplot(synthcpp$ATT, m, d, t, placebos)
+ATTplot(synthcpp$ATT, m, d, t, placebos)<br />
